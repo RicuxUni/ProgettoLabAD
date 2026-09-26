@@ -1,11 +1,12 @@
-docker exec -it lalilulelo_ad samba-tool user create  mappopo Qualiano123!
+docker exec -it lalilulelo_ad samba-tool user create  enrico Password123!
 
 docker exec -it lalilulelo_ad bash
-kinit mappopo@LALILULELO.LOCAL
-smbclient -L localhost -U "mappopo%Qualiano123!"
+kinit enrico@LALILULELO.LOCAL
+smbclient -L localhost -U "enrico%Password123!"
 
-
-
+sulla macchina host
+sudo apt install krb5-user 
+sudo apt install smbclient
 
 dopo installato linux
 

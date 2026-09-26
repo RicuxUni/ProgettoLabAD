@@ -4,7 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: lalilulelo_ad
-    network_mode: "host"
+    networks:
+      ad_network:
+        ipv4_address: 192.168.1.201
     cap_add:
       - SYS_ADMIN
     environment:
@@ -16,6 +18,19 @@ services:
       - samba-etc:/etc/samba
       - samba-var:/var/lib/samba
     restart: unless-stopped
+
+networks:
+  ad_network:
+    driver: macvlan
+    driver_opts:
+      # ATTENZIONE: Questo è il nome della scheda di rete fisica del tuo server Ubuntu.
+      # Spesso è 'eth0', 'enp0s3', o 'enp3s0'. (Controlla con 'ip a' sul terminale Ubuntu).
+      parent: enp0s3 
+    ipam:
+      config:
+        # Assicurati che subnet e gateway corrispondano alla tua rete reale (presumo 192.168.1.x)
+        - subnet: 192.168.1.0/24
+          gateway: 192.168.1.1
 
 volumes:
   samba-etc:

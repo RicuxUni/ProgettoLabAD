@@ -1,22 +1,26 @@
-$domain = "LDAP://127.0.0.1"
-$username = "LALILULELO\mappopo"
-$password = "Qualiano123!"
+Add-Type -AssemblyName System.DirectoryServices.Protocols
+
+$serverIp = "192.168.1.201"
+$username = "enrico@LALILULELO.LOCAL" 
+$password = "Password123!"
 
 try {
-    # Usiamo DirectoryEntry (ADSI) con autenticazione Sicura (Secure)
-    # Questo soddisfa il requisito di crittografia forte di Samba AD DC
-    $entry = New-Object System.DirectoryServices.DirectoryEntry($domain, $username, $password, [System.DirectoryServices.AuthenticationTypes]::Secure)
+    Write-Host "Tentativo di connessione LDAP puro a $serverIp..."
     
-    # Forza la connessione effettuando una ricerca
-    $searcher = New-Object System.DirectoryServices.DirectorySearcher($entry)
-    $searcher.Filter = "(sAMAccountName=mappopo)"
-    $result = $searcher.FindOne()
+    $identifier = New-Object System.DirectoryServices.Protocols.LdapDirectoryIdentifier($serverIp, 389)
+    $credential = New-Object System.Net.NetworkCredential($username, $password)
     
-    if ($result) {
-        Write-Host ">>> AUTENTICAZIONE ADSI RIUSCITA CON SUCCESSO DA WINDOWS! <<<" -ForegroundColor Green
-    } else {
-        Write-Host ">>> AUTENTICAZIONE FALLITA: Utente non trovato. <<<" -ForegroundColor Red
-    }
+    $connection = New-Object System.DirectoryServices.Protocols.LdapConnection($identifier, $credential)
+    $connection.SessionOptions.ProtocolVersion = 3
+    $connection.AuthType = [System.DirectoryServices.Protocols.AuthType]::Ntlm
+    
+    # Il metodo Bind() effettua l'effettiva validazione delle credenziali sul server LDAP
+    $connection.Bind()
+    
+    Write-Host ">>> AUTENTICAZIONE LDAP RIUSCITA CON SUCCESSO DA WINDOWS! <<<" -ForegroundColor Green
+    
+    # Chiusura connessione
+    $connection.Dispose()
 } catch {
     Write-Host ">>> AUTENTICAZIONE FALLITA: $($_.Exception.Message) <<<" -ForegroundColor Red
 }
