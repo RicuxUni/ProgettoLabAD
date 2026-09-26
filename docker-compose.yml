@@ -1,0 +1,35 @@
+services:
+  samba-dc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lalilulelo_ad
+    ports:
+      - "53:53"
+      - "53:53/udp"
+      - "88:88"
+      - "88:88/udp"
+      - "135:135"
+      - "389:389"
+      - "389:389/udp"
+      - "464:464"
+      - "464:464/udp"
+      - "636:636"
+      # La porta 445 (SMB) non viene esposta intenzionalmente, 
+      # altrimenti andrebbe in conflitto con il servizio nativo di Windows.
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - REALM=LALILULELO.LOCAL
+      - DOMAIN=LALILULELO
+      - ADMIN_PASSWORD=datemi30!
+    volumes:
+      # Volumi nominali per salvare i dati di Active Directory e la configurazione
+      - samba-etc:/etc/samba
+      - samba-var:/var/lib/samba
+    restart: unless-stopped
+
+volumes:
+  samba-etc:
+  samba-var:
+

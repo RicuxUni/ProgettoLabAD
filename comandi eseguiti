@@ -1,0 +1,54 @@
+docker exec -it lalilulelo_ad samba-tool user create  mappopo Qualiano123!
+
+docker exec -it lalilulelo_ad bash
+kinit mappopo@LALILULELO.LOCAL
+smbclient -L localhost -U "mappopo%Qualiano123!"
+
+
+
+
+dopo installato linux
+
+sudo apt update 
+sudo apt upgrade -y
+
+Aggiungere il repository ufficiale
+Crea la directory per le chiavi e scarica la chiave GPG ufficiale di Docker:bash
+
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+aggiunta repository docker
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+
+
+installazione
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+
+
+verifica
+sudo docker run hello-world
+
+
+
+installazine portainer
+
+sudo docker volume create portainer_data
+sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+
+all'indirizzo: https://localhost:9443  configurare la password
+
+docker logs -f portainer
+
+Qualino123!!! è la password di admin su portainer
+
+
+antigravity
+curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/antigravity-repo-key.gpg
+echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main" | sudo tee /etc/apt/sources.list.d/antigravity.list > /dev/null
