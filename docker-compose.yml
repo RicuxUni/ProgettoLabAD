@@ -4,19 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: lalilulelo_ad
-    ports:
-      - "53:53"
-      - "53:53/udp"
-      - "88:88"
-      - "88:88/udp"
-      - "135:135"
-      - "389:389"
-      - "389:389/udp"
-      - "464:464"
-      - "464:464/udp"
-      - "636:636"
-      # La porta 445 (SMB) non viene esposta intenzionalmente, 
-      # altrimenti andrebbe in conflitto con il servizio nativo di Windows.
+    network_mode: "host"
     cap_add:
       - SYS_ADMIN
     environment:

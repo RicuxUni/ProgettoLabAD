@@ -21,6 +21,8 @@ if [ ! -f /var/lib/samba/private/sam.ldb ]; then
         --domain="${DOMAIN}" \
         --server-role=dc \
         --dns-backend=SAMBA_INTERNAL \
+        --host-name=ad-dc \
+        --option="dns forwarder = 8.8.8.8" \
         --adminpass="${ADMIN_PASSWORD}"
 
     echo "=== Provisioning completato con successo ==="
