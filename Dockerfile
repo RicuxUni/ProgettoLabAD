@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     dnsutils \
     dos2unix \
     iproute2 \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # 4. Copia lo script di entrypoint (lo creeremo al punto 2) che farà il provisioning dell'AD
