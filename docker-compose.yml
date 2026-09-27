@@ -21,21 +21,13 @@ services:
       - samba-var:/var/lib/samba
     restart: unless-stopped
   ldap-ui:
-    image: dnknth/ldap-ui:latest
+    image: osixia/phpldapadmin:latest
     container_name: samba-ad-webui
     ports:
-      - "8080:5000"
+      - "8080:80"
     environment:
-      # Modifica con l'IP del tuo server Samba Active Directory
-      - LDAP_URL=ldap://192.168.1.201:389
-      # La base del tuo dominio AD (es: dc=azienda,dc=locale)
-      - BASE_DN=dc=lalilulelo,dc=local
-      # Per Active Directory serve specificare anche dove si trova lo schema
-      - SCHEMA_DN=cn=Schema,cn=Configuration,dc=lalilulelo,dc=local
-      # Variabili fondamentali per non fare check anonimi e usare attributi di Windows/Samba
-      - BIND_AS_USER=true
-      - BIND_PATTERN=cn=%s,cn=Users,dc=lalilulelo,dc=local
-      - LOGIN_ATTR=cn
+      - PHPLDAPADMIN_LDAP_HOSTS=192.168.1.201
+      - PHPLDAPADMIN_HTTPS=false
     restart: unless-stopped
 
 
