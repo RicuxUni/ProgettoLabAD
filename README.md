@@ -9,7 +9,11 @@ Per creare un utente base con la sua password, apri un nuovo terminale (assicura
 ```bash
 sudo docker exec -it lalilulelo_ad samba-tool user create enrico Password123!
 ```
-*(Sostituisci `enrico` e `Password123!` con le credenziali che preferisci)*
+
+```bash
+sudo docker exec -it lalilulelo_ad samba-tool user create massimo Password123!
+```
+
 
 Se tutto va bene, ti risponderà con: `User 'enrico' created successfully`.
 

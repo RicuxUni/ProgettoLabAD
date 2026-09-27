@@ -6,6 +6,14 @@ REALM="${REALM:-LALILULELO.LOCAL}"
 DOMAIN="${DOMAIN:-LALILULELO}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-datemi30!}"
 
+# Workaround per sovrascrivere il DNS nel container anche in "network_mode: host"
+# Dato che hai CAP_SYS_ADMIN, possiamo smontare il file resolv.conf bind-mountato da Docker (o dall'host)
+umount /etc/resolv.conf 2>/dev/null || true
+rm -f /etc/resolv.conf
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+echo "search ${REALM}" >> /etc/resolv.conf
+echo "=== File /etc/resolv.conf forzato su 127.0.0.1 ==="
+
 # Controlla se l'AD è già stato configurato in passato
 if [ ! -f /var/lib/samba/private/sam.ldb ]; then
     echo "=== Configurazione iniziale di Samba Active Directory DC ==="

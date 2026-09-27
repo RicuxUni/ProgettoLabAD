@@ -11,6 +11,10 @@ services:
       - REALM=LALILULELO.LOCAL
       - DOMAIN=LALILULELO
       - ADMIN_PASSWORD=datemi30!
+    dns:
+      - 127.0.0.1
+    dns_search:
+      - LALILULELO.LOCAL
     volumes:
       # Volumi nominali per salvare i dati di Active Directory e la configurazione
       - samba-etc:/etc/samba
