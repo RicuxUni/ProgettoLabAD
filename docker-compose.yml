@@ -29,9 +29,8 @@ services:
       # Modificato in ldaps:// per soddisfare il requisito "strong authentication"
       - PHPLDAPADMIN_LDAP_HOSTS=ldaps://192.168.1.201
       - PHPLDAPADMIN_HTTPS=false
-    volumes:
-      # Monta la configurazione LDAP personalizzata per ignorare il certificato self-signed
-      - ./ldap.conf:/etc/ldap/ldap.conf:ro
+      - PHPLDAPADMIN_LDAP_CLIENT_TLS=true
+      - PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT=never
     restart: unless-stopped
 
 
