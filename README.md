@@ -34,7 +34,7 @@ Ecco qualche altro comando che ti tornerà sicuramente utile nel tuo laboratorio
     ```
 *   **Resettare/Cambiare la password a un utente:**
     ```bash
-    sudo docker exec -it lalilulelo_ad samba-tool user setpassword enrico --newpassword=NuovaPassw0rd!
+    sudo docker exec -it lalilulelo_ad samba-tool user setpassword enrico --newpassword=1234567-A
     ```
 *   **Abilitare un utente:**
     ```bash

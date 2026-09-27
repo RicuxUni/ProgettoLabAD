@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ldap-ui:
+    image: dnknth/ldap-ui:latest
+    container_name: samba-ad-webui
+    ports:
+      - "8080:8080"
+    environment:
+      # Modifica con l'IP del tuo server Samba Active Directory
+      - LDAP_URL=ldap://192.168.1.201:389
+      # La base del tuo dominio AD (es: dc=azienda,dc=locale)
+      - LDAP_BASE_DN=dc=lalilulelo,dc=local
+      # Eventuale utente amministratore per il bind iniziale (opzionale, la UI richiede comunque il login)
+      - LDAP_BIND_DN=cn=Administrator,cn=Users,dc=lalilulelo,dc=local
+    restart: unless-stopped

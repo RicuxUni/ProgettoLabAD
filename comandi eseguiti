@@ -47,7 +47,7 @@ all'indirizzo: https://localhost:9443  configurare la password
 
 docker logs -f portainer
 
-Qualino123!!! è la password di admin su portainer
+Qualiano123!!! è la password di admin su portainer
 
 
 antigravity
@@ -73,3 +73,19 @@ sudo systemctl restart systemd-resolved
 per usare dns esterno
 sudo rm /etc/resolv.conf
 sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+
+
+firewall infame
+
+sudo ufw allow 53
+sudo ufw allow 88
+sudo ufw allow 135
+sudo ufw allow 137:139/tcp
+sudo ufw allow 137:139/udp
+sudo ufw allow 389
+sudo ufw allow 445
+sudo ufw allow 464
+sudo ufw allow 636
+sudo ufw allow 3268
+sudo ufw allow 3269

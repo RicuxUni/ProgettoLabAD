@@ -1,6 +1,6 @@
 Add-Type -AssemblyName System.DirectoryServices.Protocols
 
-$serverIp = "192.168.1.11" #impostato sulla vodafone station in dhcp reservations
+$serverIp = "192.168.1.201" #impostato sulla vodafone station in dhcp reservations
 $username = "enrico@LALILULELO.LOCAL" 
 $password = "Password123!"
 
