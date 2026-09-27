@@ -26,8 +26,12 @@ services:
     ports:
       - "8080:80"
     environment:
-      - PHPLDAPADMIN_LDAP_HOSTS=192.168.1.201
+      # Modificato in ldaps:// per soddisfare il requisito "strong authentication"
+      - PHPLDAPADMIN_LDAP_HOSTS=ldaps://192.168.1.201
       - PHPLDAPADMIN_HTTPS=false
+    volumes:
+      # Monta la configurazione LDAP personalizzata per ignorare il certificato self-signed
+      - ./ldap.conf:/etc/ldap/ldap.conf:ro
     restart: unless-stopped
 
 
