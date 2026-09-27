@@ -34,6 +34,7 @@ services:
       - SCHEMA_DN=cn=Schema,cn=Configuration,dc=lalilulelo,dc=local
       # Variabili fondamentali per non fare check anonimi e usare attributi di Windows/Samba
       - BIND_AS_USER=true
+      - BIND_PATTERN=cn=%s,cn=Users,dc=lalilulelo,dc=local
       - LOGIN_ATTR=cn
     restart: unless-stopped
 
