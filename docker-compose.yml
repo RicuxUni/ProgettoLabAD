@@ -32,6 +32,9 @@ services:
       - BASE_DN=dc=lalilulelo,dc=local
       # Per Active Directory serve specificare anche dove si trova lo schema
       - SCHEMA_DN=cn=Schema,cn=Configuration,dc=lalilulelo,dc=local
+      # Variabili fondamentali per non fare check anonimi e usare attributi di Windows/Samba
+      - BIND_AS_USER=true
+      - LOGIN_ATTR=cn
     restart: unless-stopped
 
 
