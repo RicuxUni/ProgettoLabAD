@@ -50,6 +50,7 @@ services:
       - maillogs:/var/log/mail
       - mailconfig:/tmp/docker-mailserver
       - ./ldap.conf:/etc/ldap/ldap.conf:ro
+      - ./dovecot-ldap.conf.ext:/etc/dovecot/dovecot-ldap.conf.ext:ro
     environment:
       - ENABLE_SPAMASSASSIN=0
       - ENABLE_CLAMAV=0
