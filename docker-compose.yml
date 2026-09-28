@@ -63,7 +63,7 @@ services:
       - ACCOUNT_PROVISIONER=LDAP
       - LDAP_SERVER_HOST=ldaps://ad-dc.lalilulelo.local:636
       - LDAP_SEARCH_BASE=DC=LALILULELO,DC=LOCAL
-      - LDAP_BIND_DN=CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
+      - LDAP_BIND_DN=Administrator@lalilulelo.local
       - LDAP_BIND_PW=datemi30!
       - LDAP_QUERY_FILTER_USER=(sAMAccountName=%u)
       - LDAP_QUERY_FILTER_GROUP=(member=%s)

@@ -1,7 +1,8 @@
 hosts = ldaps://ad-dc.lalilulelo.local:636
 ldap_version = 3
 auth_bind = yes
-dn = CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
+auth_bind_userdn = %u
+dn = Administrator@lalilulelo.local
 dnpass = datemi30!
 base = DC=LALILULELO,DC=LOCAL
 pass_filter = (sAMAccountName=%n)
