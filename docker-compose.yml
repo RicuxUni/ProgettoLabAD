@@ -65,11 +65,11 @@ services:
       - LDAP_SEARCH_BASE=DC=LALILULELO,DC=LOCAL
       - LDAP_BIND_DN=CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
       - LDAP_BIND_PW=datemi30!
-      - LDAP_QUERY_FILTER_USER=(userPrincipalName=%s)
+      - LDAP_QUERY_FILTER_USER=(sAMAccountName=%u)
       - LDAP_QUERY_FILTER_GROUP=(member=%s)
       - LDAP_QUERY_FILTER_ALIAS=(proxyAddresses=smtp:%s)
-      - DOVECOT_PASS_FILTER=(userPrincipalName=%u)
-      - DOVECOT_USER_FILTER=(userPrincipalName=%u)
+      - DOVECOT_PASS_FILTER=(sAMAccountName=%n)
+      - DOVECOT_USER_FILTER=(sAMAccountName=%n)
       - DOVECOT_AUTH_BIND=yes
     restart: unless-stopped
 
