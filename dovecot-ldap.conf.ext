@@ -1,4 +1,4 @@
-hosts = ldaps://192.168.1.201:636
+hosts = ldap://192.168.1.201
 ldap_version = 3
 auth_bind = yes
 dn = CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
@@ -6,4 +6,5 @@ dnpass = datemi30!
 base = DC=LALILULELO,DC=LOCAL
 pass_filter = (userPrincipalName=%u)
 user_filter = (userPrincipalName=%u)
+tls = yes
 tls_require_cert = never
