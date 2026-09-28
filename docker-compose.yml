@@ -63,7 +63,7 @@ services:
       - ENABLE_POSTGREY=0
       # Configurazione LDAP base per Active Directory
       - ACCOUNT_PROVISIONER=LDAP
-      - LDAP_SERVER_HOST=ldaps://ad-dc.lalilulelo.local:636
+      - LDAP_SERVER_HOST=ldap://ad-dc.lalilulelo.local
       - LDAP_SEARCH_BASE=DC=LALILULELO,DC=LOCAL
       - LDAP_BIND_DN=Administrator@lalilulelo.local
       - LDAP_BIND_PW=datemi30!
