@@ -58,7 +58,7 @@ services:
       - ENABLE_POSTGREY=0
       # Configurazione LDAP base per Active Directory
       - ACCOUNT_PROVISIONER=LDAP
-      - LDAP_SERVER_HOST=ldaps://192.168.1.201:636
+      - LDAP_SERVER_HOST=ldap://192.168.1.201
       - LDAPTLS_REQCERT=never
       - LDAP_SEARCH_BASE=DC=LALILULELO,DC=LOCAL
       - LDAP_BIND_DN=CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
