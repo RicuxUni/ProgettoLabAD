@@ -64,7 +64,7 @@ services:
       # Configurazione LDAP base per Active Directory
       - ACCOUNT_PROVISIONER=LDAP
       - LDAP_SERVER_HOST=ldap://ad-dc.lalilulelo.local
-      - LDAP_SEARCH_BASE=CN=Users,DC=LALILULELO,DC=LOCAL
+      - LDAP_SEARCH_BASE=CN=Users,DC=lalilulelo,DC=local
       - LDAP_BIND_DN=Administrator@lalilulelo.local
       - LDAP_BIND_PW=datemi30!
       - LDAP_QUERY_FILTER_USER=(sAMAccountName=%u)
