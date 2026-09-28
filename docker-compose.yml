@@ -33,8 +33,54 @@ services:
       - PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT=never
     restart: unless-stopped
 
+  mailserver:
+    # Nota: docker/mailserver è stato rinominato in mailserver/docker-mailserver
+    image: mailserver/docker-mailserver:latest
+    container_name: mailserver
+    hostname: mail.lalilulelo.local
+    domainname: lalilulelo.local
+    ports:
+      - "25:25"
+      - "143:143"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - maildata:/var/mail
+      - mailstate:/var/mail-state
+      - maillogs:/var/log/mail
+      - mailconfig:/tmp/docker-mailserver
+    environment:
+      - ENABLE_SPAMASSASSIN=0
+      - ENABLE_CLAMAV=0
+      - ENABLE_FAIL2BAN=0
+      - ENABLE_POSTGREY=0
+      # Configurazione LDAP base per Active Directory
+      - ACCOUNT_PROVISIONER=LDAP
+      - LDAP_SERVER_HOST=ldap://192.168.1.201
+      - LDAP_SEARCH_BASE=DC=LALILULELO,DC=LOCAL
+      - LDAP_BIND_DN=CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
+      - LDAP_BIND_PW=datemi30!
+      - LDAP_QUERY_FILTER_USER=(sAMAccountName=%s)
+      - LDAP_QUERY_FILTER_GROUP=(member=%s)
+      - LDAP_QUERY_FILTER_ALIAS=(proxyAddresses=smtp:%s)
+    restart: unless-stopped
+
+  roundcube:
+    image: roundcube/roundcubemail:latest
+    container_name: roundcube
+    ports:
+      - "8081:80"
+    environment:
+      - ROUNDCUBEMAIL_DEFAULT_HOST=mailserver
+      - ROUNDCUBEMAIL_SMTP_SERVER=mailserver
+    depends_on:
+      - mailserver
+    restart: unless-stopped
 
 volumes:
   samba-etc:
   samba-var:
-
+  maildata:
+  mailstate:
+  maillogs:
+  mailconfig:
