@@ -1,4 +1,4 @@
-hosts = ldap://ad-dc.lalilulelo.local
+hosts = ldaps://ad-dc.lalilulelo.local:636
 ldap_version = 3
 auth_bind = yes
 dn = CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
@@ -6,6 +6,6 @@ dnpass = datemi30!
 base = DC=LALILULELO,DC=LOCAL
 pass_filter = (userPrincipalName=%u)
 user_filter = (userPrincipalName=%u)
-tls = yes
+tls = no
 tls_ca_cert_file = /ad-data/private/tls/ca.pem
 tls_require_cert = demand
