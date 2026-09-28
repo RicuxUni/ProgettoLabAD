@@ -49,6 +49,7 @@ services:
       - mailstate:/var/mail-state
       - maillogs:/var/log/mail
       - mailconfig:/tmp/docker-mailserver
+      - ./ldap.conf:/etc/ldap/ldap.conf:ro
     environment:
       - ENABLE_SPAMASSASSIN=0
       - ENABLE_CLAMAV=0
@@ -56,13 +57,16 @@ services:
       - ENABLE_POSTGREY=0
       # Configurazione LDAP base per Active Directory
       - ACCOUNT_PROVISIONER=LDAP
-      - LDAP_SERVER_HOST=ldap://192.168.1.201
+      - LDAP_SERVER_HOST=ldaps://192.168.1.201:636
       - LDAP_SEARCH_BASE=DC=LALILULELO,DC=LOCAL
       - LDAP_BIND_DN=CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
       - LDAP_BIND_PW=datemi30!
-      - LDAP_QUERY_FILTER_USER=(sAMAccountName=%s)
+      - LDAP_QUERY_FILTER_USER=(userPrincipalName=%s)
       - LDAP_QUERY_FILTER_GROUP=(member=%s)
       - LDAP_QUERY_FILTER_ALIAS=(proxyAddresses=smtp:%s)
+      - DOVECOT_PASS_FILTER=(userPrincipalName=%u)
+      - DOVECOT_USER_FILTER=(userPrincipalName=%u)
+      - DOVECOT_AUTH_BIND=yes
     restart: unless-stopped
 
   roundcube:
