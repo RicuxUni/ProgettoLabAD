@@ -51,6 +51,7 @@ services:
       - mailconfig:/tmp/docker-mailserver
       - ./ldap.conf:/etc/ldap/ldap.conf:ro
       - ./dovecot-ldap.conf.ext:/etc/dovecot/dovecot-ldap.conf.ext:ro
+      - ./dovecot-ldap-tls.conf:/etc/dovecot/conf.d/99-ldap-tls.conf:ro
       - samba-var:/ad-data:ro
     extra_hosts:
       - "ad-dc.lalilulelo.local:192.168.1.201"
