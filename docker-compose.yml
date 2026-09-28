@@ -48,7 +48,8 @@ services:
       - maildata:/var/mail
       - mailstate:/var/mail-state
       - maillogs:/var/log/mail
-      - mailconfig:/tmp/docker-mailserver
+      - ./config:/tmp/docker-mailserver
+      - ./user-patches.sh:/tmp/docker-mailserver/user-patches.sh:ro
       - ./ldap.conf:/etc/ldap/ldap.conf:ro
       - ./dovecot-ldap.conf.ext:/etc/dovecot/dovecot-ldap.conf.ext:ro
       - ./dovecot-ldap-tls.conf:/etc/dovecot/conf.d/99-ldap-tls.conf:ro
@@ -94,4 +95,3 @@ volumes:
   maildata:
   mailstate:
   maillogs:
-  mailconfig:
