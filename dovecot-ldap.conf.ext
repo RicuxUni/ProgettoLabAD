@@ -1,4 +1,4 @@
-hosts = ldap://192.168.1.201
+hosts = ldap://ad-dc.lalilulelo.local
 ldap_version = 3
 auth_bind = yes
 dn = CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
@@ -7,4 +7,5 @@ base = DC=LALILULELO,DC=LOCAL
 pass_filter = (userPrincipalName=%u)
 user_filter = (userPrincipalName=%u)
 tls = yes
-tls_require_cert = never
+tls_ca_cert_file = /ad-data/private/tls/ca.pem
+tls_require_cert = demand

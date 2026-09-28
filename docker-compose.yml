@@ -51,6 +51,9 @@ services:
       - mailconfig:/tmp/docker-mailserver
       - ./ldap.conf:/etc/ldap/ldap.conf:ro
       - ./dovecot-ldap.conf.ext:/etc/dovecot/dovecot-ldap.conf.ext:ro
+      - samba-var:/ad-data:ro
+    extra_hosts:
+      - "ad-dc.lalilulelo.local:192.168.1.201"
     environment:
       - ENABLE_SPAMASSASSIN=0
       - ENABLE_CLAMAV=0
@@ -58,8 +61,7 @@ services:
       - ENABLE_POSTGREY=0
       # Configurazione LDAP base per Active Directory
       - ACCOUNT_PROVISIONER=LDAP
-      - LDAP_SERVER_HOST=ldap://192.168.1.201
-      - LDAPTLS_REQCERT=never
+      - LDAP_SERVER_HOST=ldap://ad-dc.lalilulelo.local
       - LDAP_SEARCH_BASE=DC=LALILULELO,DC=LOCAL
       - LDAP_BIND_DN=CN=Administrator,CN=Users,DC=LALILULELO,DC=LOCAL
       - LDAP_BIND_PW=datemi30!
