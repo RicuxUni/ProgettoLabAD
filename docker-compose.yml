@@ -70,8 +70,8 @@ services:
       - LDAP_QUERY_FILTER_USER=(sAMAccountName=%u)
       - LDAP_QUERY_FILTER_GROUP=(member=%s)
       - LDAP_QUERY_FILTER_ALIAS=(proxyAddresses=smtp:%s)
-      - DOVECOT_PASS_FILTER=(userPrincipalName=%u)
-      - DOVECOT_USER_FILTER=(userPrincipalName=%u)
+      - "DOVECOT_PASS_FILTER=(sAMAccountName=%{user | username})"
+      - "DOVECOT_USER_FILTER=(sAMAccountName=%{user | username})"
       - DOVECOT_PASS_ATTRS=userPrincipalName=user
       - DOVECOT_USER_ATTRS==uid=5000,=gid=5000
       - DOVECOT_AUTH_BIND=yes
