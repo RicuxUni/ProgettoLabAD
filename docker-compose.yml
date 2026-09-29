@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
 
   mailserver:
-    # Nota: docker/mailserver è stato rinominato in mailserver/docker-mailserver
+    #docker/mailserver è stato rinominato in mailserver/docker-mailserver
     image: mailserver/docker-mailserver:latest
     container_name: mailserver
     hostname: mail.lalilulelo.local
@@ -57,11 +57,11 @@ services:
     extra_hosts:
       - "ad-dc.lalilulelo.local:192.168.1.201"
     environment:
-      - ENABLE_SPAMASSASSIN=0
-      - ENABLE_CLAMAV=0
+      - ENABLE_SPAMASSASSIN=1
+      - ENABLE_CLAMAV=1
       - ENABLE_FAIL2BAN=0
       - ENABLE_POSTGREY=0
-      # Configurazione LDAP base per Active Directory
+      #La configurazione di LDAP per Active Directory
       - ACCOUNT_PROVISIONER=LDAP
       - LDAP_SERVER_HOST=ldaps://ad-dc.lalilulelo.local:636
       - LDAP_SEARCH_BASE=CN=Users,DC=lalilulelo,DC=local
