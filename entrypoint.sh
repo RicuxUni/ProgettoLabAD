@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
 
-# Variabili d'ambiente di default (sovrascrivibili al run)
+#variabili d'ambiente
 REALM="${REALM:-LALILULELO.LOCAL}"
 DOMAIN="${DOMAIN:-LALILULELO}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-datemi30!}"
 
-# Workaround per sovrascrivere il DNS nel container anche in "network_mode: host"
+#workaround per sovrascrivere il DNS nel container anche in "network_mode: host"
 # Dato che hai CAP_SYS_ADMIN, possiamo smontare il file resolv.conf bind-mountato da Docker (o dall'host)
 umount /etc/resolv.conf 2>/dev/null || true
 rm -f /etc/resolv.conf

@@ -47,6 +47,9 @@ _ldap._tcp.lalilulelo.local  service = 0 100 389 ad-dc.lalilulelo.local
 Prima di procedere al join, è stato verificato che il DC rilasci correttamente i ticket Kerberos per l'utente di dominio:
 
 ```sh
+sudo apt install krb5-user -y
+#inserisci LALILULELO.LOCAL come realm
+
 kinit enrico@LALILULELO.LOCAL
 klist
 ```
@@ -75,6 +78,7 @@ che conferma il dominio come correttamente configurato (`configured: kerberos-me
 Dopo aver abilitato la creazione automatica della home directory (`pam_oddjob_mkhomedir.so` in `/etc/pam.d/common-session`), sono stati effettuati con successo test di login con l'utente di dominio, sia localmente:
 
 ```sh
+sudo sed -i '/pam_unix.so/a session optional pam_oddjob_mkhomedir.so umask=0077' /etc/pam.d/common-session
 su - enrico@lalilulelo.local
 ```
 
