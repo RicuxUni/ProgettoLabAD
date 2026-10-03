@@ -1,9 +1,9 @@
-# Relazione di Progetto: Infrastruttura Active Directory e Mail Server 
-**(Approccio "Infrastructure as Code" tramite Docker)**
+# Infrastruttura Active Directory e Mail Server LALILULELO
+**Enrico Petrillo 902855**
 
 ## 1. Contesto e Approccio Metodologico
 
-Il progetto universitario prevede la realizzazione di un'infrastruttura di dominio Active Directory (Samba) per una piccola organizzazione composta da 5 client (computer), 10 utenti interattivi e 10 caselle di posta elettronica da 5 GB (totale 50 GB di storage dedicato alla posta).
+Il progetto prevede la realizzazione di un'infrastruttura di dominio Active Directory (Samba) per una piccola organizzazione composta da 5 client (computer), 10 utenti interattivi e 10 caselle di posta elettronica da 5 GB (totale 50 GB di storage dedicato alla posta).
 
 Per soddisfare questi requisiti in modo scalabile e riproducibile, l'intero progetto è stato affrontato con una logica **"Infrastructure as Code" (IaC)** fortemente orientata all'utilizzo di **Docker**. Piuttosto che eseguire decine di comandi manuali all'interno della macchina server, **la logica di configurazione è stata codificata all'interno di script, Dockerfile e file di configurazione Compose**. 
 
@@ -338,7 +338,7 @@ volumes:
 **Analisi:** Nel container del server di posta viene usato il volume `samba.ver` in modo che possa leggere il certificato radice ca.pem generato da samba e possa parlarsi in modalità cifrata
 Le variabili LDAP permetto di usare le utenze di Active Directory per autenticarsi al server di posta.
 
-> *📸 **[SEGNAPOSTO SCREENSHOT 6]**: Inserire qui l'output di `docker compose ps` oppure una vista da Portainer che mostra i container "samba-dc" e "mailserver" nello stato "Up/Running".*
+`docker compose ps`
 ![Screenshot 6: Container in esecuzione](immagini/img6_container_up.png)
 
 ### 3.4 Autenticazione centralizzata: `dovecot-ldap.conf.ext`
@@ -362,7 +362,186 @@ tls_require_cert = demand
 > *📸 **[SEGNAPOSTO SCREENSHOT 7]**: Inserire qui un log di sistema del mailserver (`docker logs mailserver`) che mostra una riga di "auth" andata a buon fine per un utente AD, oppure la schermata di login di una webmail/client.*
 ![Screenshot 7: Test autenticazione LDAP su Mailserver](immagini/img7_ldap_auth.png)
 
-## 4. Conclusione
+
+
+
+## 4. Join di un client Linux (Xubuntu) al dominio e verifica dell'autenticazione
+
+A completamento del progetto, è stato verificato che il Domain Controller sia in grado di autenticare correttamente un client Linux esterno, distinto dalle macchine Docker utilizzate per la creazione del dominio. A tale scopo è stata utilizzata una VM Xubuntu 26.04 LTS, unita al dominio `lalilulelo.local` (realm `LALILULELO.LOCAL`) tramite lo stack `realmd`/`sssd`, e sono stati eseguiti test di login reali con un utente di dominio (`enrico`).
+
+### Preparazione ambiente e accesso remoto
+
+Per operare più comodamente, è stato abilitato l'accesso SSH alla VM:
+
+```sh
+sudo apt update
+sudo apt install openssh-server
+sudo systemctl start ssh
+```
+
+Sono stati quindi installati i pacchetti necessari per l'integrazione con Active Directory:
+
+```sh
+sudo apt install realmd sssd sssd-tools libnss-sss libpam-sss adcli samba-common-bin oddjob oddjob-mkhomedir packagekit
+```
+![pacchetti client](immagini/clientpkg.png)
+
+### Configurazione del DNS verso il Domain Controller
+
+Il client risultava inizialmente configurato con il DNS del router (`192.168.1.1`) e nessun dominio di ricerca impostato, impedendo la risoluzione dei record SRV necessari alla scoperta del DC. La configurazione è stata corretta e resa **permanente** tramite NetworkManager, per evitare che venisse sovrascritta al riavvio o al rinnovo del lease DHCP:
+
+```sh
+sudo nmcli con mod "netplan-enp0s3" ipv4.dns "192.168.1.201"
+sudo nmcli con mod "netplan-enp0s3" ipv4.dns-search "lalilulelo.local"
+sudo nmcli con mod "netplan-enp0s3" ipv4.ignore-auto-dns yes
+sudo nmcli con up "netplan-enp0s3"
+```
+
+La verifica con `resolvectl status` conferma la configurazione corretta e stabile:
+
+![config dns](immagini/clientdns.png)
+
+Il corretto funzionamento del DNS del DC è stato inoltre confermato dall'interrogazione dei record SRV di Active Directory:
+
+```sh
+  host -t SRV _ldap._tcp.lalilulelo.local
+  nslookup -type=SRV _ldap._tcp.lalilulelo.local
+```
+![risoluzione record dns](immagini/clientdns2.png)
+
+### Verifica isolata dell'autenticazione Kerberos
+
+Prima di procedere al join, è stato verificato che il DC rilasci correttamente i ticket Kerberos per l'utente di dominio:
+
+```sh
+sudo apt install krb5-user -y
+#inserisci LALILULELO.LOCAL come realm, il resto 'ad-dc' e 'ad-dc'
+```
+![kerberos](immagini/kerberos.png)
+```
+kinit enrico@LALILULELO.LOCAL
+klist
+```
+
+Il comando ha restituito un Ticket Granting Ticket valido (`krbtgt/LALILULELO.LOCAL@LALILULELO.LOCAL`), a conferma che il servizio Kerberos del DC autentica correttamente le credenziali.
+
+### Discovery e join al dominio
+
+```sh
+sudo realm discover lalilulelo.local
+sudo realm join lalilulelo.local -U enrico
+```
+
+
+Il comando `realm join` ha configurato automaticamente `sssd` (file `/etc/sssd/sssd.conf`), completando il join senza necessità di configurazione manuale di Samba/Kerberos.
+
+Lo stato del join è stato verificato con:
+
+```sh
+realm list
+```
+![discover](immagini/discover.png)
+![realm list](immagini/list.png)
+
+che conferma il dominio come correttamente configurato (`configured: kerberos-member`), con `sssd` come client software e `login-policy: allow-realm-logins`.
+
+### Verifica del login e dell'identità utente
+
+Dopo aver abilitato la creazione automatica della home directory (`pam_oddjob_mkhomedir.so` in `/etc/pam.d/common-session`), sono stati effettuati con successo test di login con l'utente di dominio, sia localmente:
+
+```sh
+sudo sed -i '/pam_unix.so/a session optional pam_oddjob_mkhomedir.so umask=0077' /etc/pam.d/common-session
+sudo systemctl enable --now oddjobd
+su - enrico@lalilulelo.local
+```
+
+sia via SSH, sia in locale sulla VM sia da un client Windows remoto sulla stessa rete, confermando l'autenticazione anche in un contesto di accesso realmente distribuito.
+
+Infine, è stata verificata l'identità mappata dal DC per l'utente tramite:
+
+```sh
+id enrico@lalilulelo.local
+```
+
+
+```
+uid=1222401103(enrico@lalilulelo.local)
+gid=1222400513(domain users@lalilulelo.local)
+groups=1222400513(domain users@lalilulelo.local),
+       1222400512(domain admins@lalilulelo.local),
+       1222400572(denied rodc password replication group@lalilulelo.local)
+```
+
+Il risultato conferma che il sistema riceve dal DC un'identità completa e coerente con quella definita in Active Directory, inclusa l'appartenenza dell'utente `enrico` al gruppo **Domain Admins**.
+
+![risultato id](immagini/login.png)
+
+![login ui](./immagini/loginui.png)
+
+![logged ui](./immagini/logged.png)
+### Conclusioni della verifica
+
+I test condotti dimostrano che il Domain Controller opera correttamente anche verso un client Linux esterno all'infrastruttura Docker: pubblica i servizi DNS necessari alla scoperta del dominio, autentica le credenziali via Kerberos, gestisce correttamente il join tramite `realmd`/`sssd`, ed espone identità utente coerenti (UID, GID, appartenenza ai gruppi) utilizzabili per l'autenticazione e l'autorizzazione a livello di sistema operativo.
+
+## 5. Amministrazione Dominio
+Per l'amministrazione del dominio è possibile usare dei comandi al terminale come quelli qui sotto, o anche  installare strumenti visuali come PHPLDAPADMIN
+
+### Gestione Utenti e Gruppi in AD (`samba-tool`)
+Eseguire dal terminale Host:
+
+- **Creazione Utente**:
+  ```bash
+  docker exec -it lalilulelo_ad samba-tool user create enrico Password123!
+  ```
+- **Aggiunta utente al gruppo Amministratori**:
+  ```bash
+  docker exec -it lalilulelo_ad samba-tool group addmembers "Domain Admins" enrico
+  ```
+- **Reset Password**:
+  ```bash
+  docker exec -it lalilulelo_ad samba-tool user setpassword enrico --newpassword=1234567-A
+  ```
+- **Elenco e disattivazione utenti**:
+  ```bash
+  docker exec -it lalilulelo_ad samba-tool user list
+  docker exec lalilulelo_ad samba-tool user disable enrico
+  ```
+
+In questo progetto sono stati usati entrambe le modalità di gestione del dominio: da riga di comando e tramite PHPLDAPADMIN.
+
+![phppng](immagini/php.png)
+
+## 6. Posta Elettronica
+
+La posta elettronica può essere raggiunta sia con la webmail inclusa in questo progetto (Roundcube), sia con un MUA come Thunderbird. Entrambi sono configurati per utilizzare il protocollo IMAP per la ricezione e SMTP per l'invio.
+
+![webmail](immagini/webmail.png)
+
+![webmail in arrivo](immagini/inarrivo.png)
+
+![webmail spam](immagini/spam.png)
+
+la mail di spam è creato inserendo la stringa sotto riportata (risolto da smapassasin)
+![spam string](immagini/spamstring.png)
+
+
+Lo stesso approccio è stato usato per testare l'antivirus ClamAV inviando una mail contenente il virus EICAR.
+
+![inviovirus](immagini/inviovirus.png)
+
+in questo caso la mail è stata bloccata da ClamAV, come si può vedere dall'immagine sotto  ricavata dai log
+
+![clamavlog](immagini/virusrilevato.png)
+### Configurazione MUA Thunderbird
+![imap](immagini/imap.png)
+
+![smtp](immagini/smtp.png)
+
+![bird](immagini/bird.png)
+
+
+
+## 15. Conclusione
 Tramite la containerizzazione e i file dichiarativi, si è convertito un deployment potenzialmente caotico di centinaia di comandi in un ecosistema auto-sufficiente che, di base, parte semplicemente digitando `docker compose up -d`. L'intera topologia è "documentata dal codice stesso", in conformità con i migliori paradigmi DevOps.
 
 > *📸 **[SEGNAPOSTO SCREENSHOT 8]**: (Opzionale ma d'impatto) Inserire qui uno screenshot di un client Windows (es. Windows 10/11) correttamente unito al dominio `LALILULELO.LOCAL`, oppure dell'interfaccia RSAT che mostra gli utenti caricati sul server.*
