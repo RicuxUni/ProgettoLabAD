@@ -78,10 +78,16 @@ sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyring
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 
 # Aggiunta del repository
+# dpkg --print-architecture  permette di conoscere l'architettura della macchina (amd64, arm64, etc.)
+# $(. /etc/os-release && echo "$VERSION_CODENAME")  permette di conoscere il nome in codice della versione di ubuntu (es. noble, jammy, etc.) 
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# mette la riga
+# deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu   resolute stable
+# nel file  /etc/apt/sources.list.d/docker.list sul mio host 
 
 # Installazione dei pacchetti Docker
 sudo apt update
@@ -99,31 +105,36 @@ sudo docker volume create portainer_data
 sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always \
   -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
 ```
+per poter usare portainer è stato necesasrio accedere a all'indirizzo: https://localhost:9443  per configurare la password. La schermata di creazione ha richiesto l'inserimento di un token ottenuto eseguendo il comando:
+
+```bash
+sudo docker logs -f portainer
+```
+![token](immagini/tokenportainer.png)
+
+![password](immagini/passchoice.png)
+
+alla fine questa è stata la schermata di login
 
 ![Screenshot 4: Portainer Dashboard](immagini/img4_portainer.png)
 
-### 2.5 Deploy dell'Infrastruttura e Gestione
-Una volta preparato l'Host, l'infrastruttura si avvia con i seguenti comandi:
+## 3. Deploy dell'Infrastruttura e Gestione
+Una volta preparato l'Host, ed i file di configurazion che vengono riportati sotto, l'infrastruttura si avvierà con il seguente comande:
 ```bash
 # Avvio di tutti i container definiti nel Compose
 sudo docker compose up -d --build
-
-# Esempio di creazione utente direttamente all'interno del container AD
-sudo docker exec -it lalilulelo_ad samba-tool user create <nomeutente> <password>
 ```
 **Tutto il resto dell'installazione è stato delegato ai file sottostanti.**
 
----
-
-## 3. L'Automazione: Script e File di Configurazione
-
-In questa sezione sono riportati e spiegati i file che costituiscono il core dell'automazione.
 
 ### 3.1 Il File Immagine: `Dockerfile`
 
-Pur essendo disponibili delle immagini Samba AD ufficiali, abbiamo deciso di non utilizzare una di quelle per poter capire meglio i vari passaggi della configurazione.
+Pur essendo disponibili immagini Docker ufficiali di Samba AD, si è scelto deliberatamente di **non utilizzarne una già predisposta per la realizzazione del domain controller**. Essendo il dominio Active Directory basato su Samba il fulcro del progetto e il principale oggetto di studio, l'utilizzo di un'immagine già configurata avrebbe ridotto significativamente la componente di progettazione e configurazione richiesta. Si è quindi preferito realizzare e configurare autonomamente il container Samba AD, così da comprendere e documentare direttamente tutti i passaggi necessari alla sua implementazione.
 
-Per gli altri container invece abbiamo utilizzato le immagini ufficiali poiché essi riguardano aspetti marginali del progetto, come la webmail, phpldapadmin e il mailserver. Questi sono stati inclusi per mostrare come Samba possa integrarsi con altri sistemi. Lo stesso per portainer, installato per aver un'interfaccia grafica per la gestione dei container accessibile dal browser del pc fisico.
+Per gli altri container, invece, si è fatto ricorso a immagini ufficiali già disponibili, poiché tali servizi non costituivano l'obiettivo principale del progetto, ma avevano principalmente una funzione **dimostrativa e di integrazione**. Webmail, phpLDAPadmin e mailserver sono stati infatti inclusi per mostrare come il dominio Samba possa integrarsi con servizi e strumenti esterni. Analogamente, Portainer è stato utilizzato per fornire un'interfaccia grafica accessibile dal browser del computer fisico, facilitando la gestione dei container.
+
+In questi casi, l'utilizzo di immagini già pronte ha permesso di concentrare il lavoro sugli aspetti effettivamente rilevanti per il progetto, evitando di dedicare una parte significativa dell'attività alla realizzazione da zero di componenti che non costituivano l'oggetto principale della prova.
+
 
 Il Dockerfile è il seguente:
 
@@ -160,13 +171,15 @@ EXPOSE 53 53/udp 88 88/udp 135 389 389/udp 445 464 464/udp 636
 
 ENTRYPOINT ["/entrypoint.sh"]
 ```
-**Perché in questo modo?** Invece di eseguire `apt install samba` a mano sul server, il container scarica l'OS, installa i pacchetti senza iterazioni utente (`noninteractive`) e inserisce all'interno lo script che lo comanderà.
+Questo file permette di aggiungere i pachetti necessari alla creazione del dominio, espone le porte necessarie, copia il file entrypoint.sh e lo esegue. La variabile di ambiente DEBIAN_FRONTEND=noninteractive serve ad evitare che durante l'installazione si aprano finestre.
 
 ### 3.2 Il Provisioning Automatico: `entrypoint.sh`
 Questo script bash viene lanciato in automatico appena il container nasce. Il suo scopo è creare il Dominio senza che l'utente debba interagire con i comandi di `samba-tool`.
 
 ```bash
 #!/bin/bash
+
+#al primo errore esci
 set -e
 
 #variabili d'ambiente
@@ -180,11 +193,11 @@ umount /etc/resolv.conf 2>/dev/null || true
 rm -f /etc/resolv.conf
 echo "nameserver 127.0.0.1" > /etc/resolv.conf
 echo "search ${REALM}" >> /etc/resolv.conf
-echo "=== File /etc/resolv.conf forzato su 127.0.0.1 ==="
+echo "-------- File /etc/resolv.conf forzato su 127.0.0.1 -----"
 
 # Controlla se l'AD è già stato configurato in passato
 if [ ! -f /var/lib/samba/private/sam.ldb ]; then
-    echo "=== Configurazione iniziale di Samba Active Directory DC ==="
+    echo "------ Configurazione iniziale di Samba Active Directory DC ----"
 
     # Rimuove la configurazione Samba di default che bloccherebbe il provisioning
     rm -f /etc/samba/smb.conf
@@ -196,14 +209,14 @@ if [ ! -f /var/lib/samba/private/sam.ldb ]; then
         --realm="${REALM}" \
         --domain="${DOMAIN}" \
         --server-role=dc \
-        --dns-backend=SAMBA_INTERNAL \
+        --dns-backend=SAMBA_INTERNAL \ 
         --host-name=ad-dc \
         --option="dns forwarder = 8.8.8.8" \
         --adminpass="${ADMIN_PASSWORD}"
 
-    echo "=== Provisioning completato con successo ==="
+    echo "---- Provisioning completato con successo --------"
 else
-    echo "=== Active Directory già configurato. Avvio in corso... ==="
+    echo "------ Active Directory già configurato. Avvio in corso... ------"
 fi
 
 # Sovrascrive la configurazione di Kerberos per forzare la risoluzione in locale (su 127.0.0.1)
@@ -225,12 +238,11 @@ EOF
 exec samba -F
 
 ```
-**Perché in questo modo?** 
-1) Garantisce l'idempotenza: se il dominio esiste già, non lo distrugge, altrimenti crea il reame `LALILULELO.LOCAL`.
-2) Risolve un problema noto dell'esecuzione in `network_mode: host`. Se lasciato intatto, il container erediterebbe il DNS dell'host, impedendo al comando `domain provision` di rintracciare se stesso. Con la capability `SYS_ADMIN` dichiarata nel compose, lo script **scollega** (umount) forzatamente il file DNS dell'host per fargli puntare al localhost.
+Questo script ha la caratteristica di essere idempotente, quindi se eseguito più volte il risultato rimane il medesimo.
+ Risolve un problema noto dell'esecuzione in `network_mode: host`. Se lasciato intatto, il container erediterebbe il DNS dell'host, impedendo al comando `domain provision` di rintracciare se stesso. Con la capability `SYS_ADMIN` dichiarata nel compose, lo script **scollega** (umount) forzatamente il file DNS dell'host per fargli puntare al localhost.
 
 ### 3.3 L'Orchestrazione: `docker-compose.yml` 
-Il file YAML lega insieme Dominio, Interfaccia grafica (phpldapadmin) e Server di posta (docker-mailserver).
+Il file YAML lega insieme Dominio, Interfaccia grafica (phpldapadmin) e Server di posta (docker-mailserver) e webmail(roundcube).
 
 ```yaml
 services:
@@ -316,7 +328,7 @@ services:
     image: roundcube/roundcubemail:latest
     container_name: roundcube
     ports:
-      - "8081:80"
+      - "8081:80"  #la porta 8080 è occupata da phpLDAPadmin
     environment:
       - ROUNDCUBEMAIL_DEFAULT_HOST=mailserver #qua viene usata la rete interna di docker
       - ROUNDCUBEMAIL_SMTP_SERVER=mailserver
@@ -332,14 +344,14 @@ volumes:
   maillogs:
 
 ```
-**Analisi:** Nel container del server di posta viene usato il volume `samba.ver` in modo che possa leggere il certificato radice ca.pem generato da samba e possa parlarsi in modalità cifrata
+Da notare che nel container del server di posta viene usato il volume `samba.var` in modo che possa leggere il certificato radice ca.pem generato da samba e possa parlarsi in modalità cifrata
 Le variabili LDAP permetto di usare le utenze di Active Directory per autenticarsi al server di posta.
 
 `docker compose ps`
-![Screenshot 6: Container in esecuzione](immagini/img6_container_up.png)
+![Container in esecuzione](immagini/img6_container_up.png)
 
 ### 3.4 Autenticazione centralizzata: `dovecot-ldap.conf.ext`
-File caricato nel Mail Server come volume, indica a Dovecot come verificare le credenziali che gli arrivano al momento del login.
+Questo file viene caricato nel Mail Server come volume, indica a Dovecot come verificare le credenziali che gli arrivano al momento del login.
 ```ini
 hosts = ldaps://ad-dc.lalilulelo.local:636
 ldap_version = 3
@@ -354,12 +366,10 @@ tls = no
 tls_ca_cert_file = /ad-data/private/tls/ca.pem
 tls_require_cert = demand
 ```
-**Analisi:** Questa configurazione evita la duplicazione degli account (gli utenti sono creati solo su Samba). Dovecot cerca la corrispondenza del login (es. `enrico`) controllando l'attributo nativo di Windows/Samba `sAMAccountName` (vedi filtri) stabilendo l'autenticità solo se possiede una connessione LDAPS affidabile con Samba (`tls_require_cert = demand`).
+ Questa configurazione evita permette di definire gli account solo su Samba, infatti non è stato necessario creare alcun account in  Dovecot, il  quale cerca la corrispondenza del login (es. `enrico`) controllando l'attributo nativo di Windows/Samba `sAMAccountName` (vedi filtri) stabilendo l'autenticità solo se possiede una connessione LDAPS affidabile con Samba (`tls_require_cert = demand`).
 
-> *📸 **[SEGNAPOSTO SCREENSHOT 7]**: Inserire qui un log di sistema del mailserver (`docker logs mailserver`) che mostra una riga di "auth" andata a buon fine per un utente AD, oppure la schermata di login di una webmail/client.*
+In questo screenshot si vede un login riuscito effettuato tramite l'interfaccia di roundcube: `sudo docker logs mailserver` mostra che l'utente enrico si è loggato correttamente al server di posta con le sue credenziali di Active Directory
 ![ldapauth](immagini/img7_ldap_auth.png)
-
-
 
 
 ## 4. Join di un client Linux (Xubuntu) al dominio e verifica dell'autenticazione
@@ -476,9 +486,7 @@ Il risultato conferma che il sistema riceve dal DC un'identità completa e coere
 ![login ui](./immagini/logingui.png)
 
 ![logged ui](./immagini/logged.png)
-### Conclusioni della verifica
 
-I test condotti dimostrano che il Domain Controller opera correttamente anche verso un client Linux esterno all'infrastruttura Docker: pubblica i servizi DNS necessari alla scoperta del dominio, autentica le credenziali via Kerberos, gestisce correttamente il join tramite `realmd`/`sssd`, ed espone identità utente coerenti (UID, GID, appartenenza ai gruppi) utilizzabili per l'autenticazione e l'autorizzazione a livello di sistema operativo.
 
 ## 5. Amministrazione Dominio
 Per l'amministrazione del dominio è possibile usare dei comandi al terminale come quelli qui sotto, o anche  installare strumenti visuali come PHPLDAPADMIN
@@ -539,7 +547,4 @@ in questo caso la mail è stata bloccata da ClamAV, come si può vedere dall'imm
 
 
 ## 15. Conclusione
-Tramite la containerizzazione e i file dichiarativi, si è convertito un deployment potenzialmente caotico di centinaia di comandi in un ecosistema auto-sufficiente che, di base, parte semplicemente digitando `docker compose up -d`. L'intera topologia è "documentata dal codice stesso", in conformità con i migliori paradigmi DevOps.
 
-> *📸 **[SEGNAPOSTO SCREENSHOT 8]**: (Opzionale ma d'impatto) Inserire qui uno screenshot di un client Windows (es. Windows 10/11) correttamente unito al dominio `LALILULELO.LOCAL`, oppure dell'interfaccia RSAT che mostra gli utenti caricati sul server.*
-![Screenshot 8: Risultato Finale - Client a dominio](immagini/img8_risultato_finale.png)
