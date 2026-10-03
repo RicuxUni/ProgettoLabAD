@@ -1,31 +1,28 @@
 # Infrastruttura Active Directory e Mail Server LALILULELO
 **Enrico Petrillo 902855**
 
-## 1. Contesto e Approccio Metodologico
+## 1. Approccio 
+Il progetto scelto è la realizzazione di un'infrastruttura di dominio Active Directory (Samba) per una piccola organizzazione composta da 5 client (computer), 10 utenti interattivi e 10 caselle di posta elettronica da 5 GB (totale 50 GB di storage dedicato alla posta).
 
-Il progetto prevede la realizzazione di un'infrastruttura di dominio Active Directory (Samba) per una piccola organizzazione composta da 5 client (computer), 10 utenti interattivi e 10 caselle di posta elettronica da 5 GB (totale 50 GB di storage dedicato alla posta).
+Piuttosto che eseguire decine di comandi manuali all'interno della macchina server, **la logica di configurazione è stata codificata all'interno di script, Dockerfile, docker-compose.yml e file di configurazione**. 
 
-Per soddisfare questi requisiti in modo scalabile e riproducibile, l'intero progetto è stato affrontato con una logica **"Infrastructure as Code" (IaC)** fortemente orientata all'utilizzo di **Docker**. Piuttosto che eseguire decine di comandi manuali all'interno della macchina server, **la logica di configurazione è stata codificata all'interno di script, Dockerfile e file di configurazione Compose**. 
+Questo approccio permette di definire, avviare e distruggere l'intera infrastruttura (Domain Controller, Web UI, Mail Server e Webmail) con un solo comando.
 
-Questo approccio permette di definire, avviare e distruggere l'intera infrastruttura (Domain Controller, Web UI, Mail Server e Webmail) con un solo comando, riducendo drasticamente il margine di errore umano.
+![Portainer](immagini/img1_architettura.png)
 
-![Screenshot 1: Architettura di base o Portainer](immagini/img1_architettura.png)
-
----
-
-## 2. Installazione VM e Preparazione Host (How-To)
+## 2. Installazione VM e Preparazione Host
 
 In questa fase, è stata preparata la macchina virtuale host che ospiterà i container. Il sistema operativo scelto è **XUbuntu** perché più leggero rispetto ad altre distribuzioni.
 ![macchina virtuale](immagini/vm.png)
 
 ### 2.1 Creazione VM e Partizionamento
-La macchina virtuale è stata configurata con un disco da 100 GB. Durante l'installazione del sistema operativo, è stato scelto un partizionamento manuale in base alle esigenze di storage del progetto.
+La macchina virtuale è stata configurata con un disco da 100 GB. Durante l'installazione del sistema operativo, è stato scelto un partizionamento manuale. 
 Dato il massiccio utilizzo di container e la necessità di dedicare 50 GB per le e-mail, lo schema di partizionamento applicato è il seguente:
 - **`/` (Root)**: 40 GB
 - **`/var/lib/docker`**: 60 GB (Questo volume separato garantisce che i dati dei container e le caselle di posta non saturino mai la partizione di sistema).
 
 
-![Screenshot 2: Schema Partizionamento LVM](immagini/partizionamento.png)
+![partizionamento](immagini/partizionamento.png)
 
 ### 2.2 Configurazione di Rete e Risoluzione Conflitti DNS
 Samba AD richiede l'uso esclusivo della porta 53 per il proprio server DNS. Su Ubuntu, questa porta è solitamente occupata dal servizio `systemd-resolved`.
@@ -45,7 +42,7 @@ sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 ```
 
 ![Modifica a resolved.conf](immagini/resolved.png)
-### 2.3 Configurazione del Firewall (UFW)
+### 2.3 Configurazione del Firewall
 Per consentire il traffico verso Active Directory e il Mail Server, sono state aperte le porte necessarie nel firewall dell'host:
 
 ```bash
@@ -66,10 +63,10 @@ sudo ufw enable
 ```
 
 
-![Screenshot 3: Regole Firewall UFW](immagini/img3_ufw.png)
+![UFW](immagini/img3_ufw.png)
 
 ### 2.4 Installazione di Docker e Portainer
-Successivamente, si è proceduto all'installazione di Docker utilizzando il repository ufficiale di Ubuntu:
+Per l'installazione si è utilizzato il repository ufficiale Ubuntu:
 
 ```bash
 # Aggiornamento pacchetti base
@@ -360,7 +357,7 @@ tls_require_cert = demand
 **Analisi:** Questa configurazione evita la duplicazione degli account (gli utenti sono creati solo su Samba). Dovecot cerca la corrispondenza del login (es. `enrico`) controllando l'attributo nativo di Windows/Samba `sAMAccountName` (vedi filtri) stabilendo l'autenticità solo se possiede una connessione LDAPS affidabile con Samba (`tls_require_cert = demand`).
 
 > *📸 **[SEGNAPOSTO SCREENSHOT 7]**: Inserire qui un log di sistema del mailserver (`docker logs mailserver`) che mostra una riga di "auth" andata a buon fine per un utente AD, oppure la schermata di login di una webmail/client.*
-![Screenshot 7: Test autenticazione LDAP su Mailserver](immagini/img7_ldap_auth.png)
+![ldapauth](immagini/img7_ldap_auth.png)
 
 
 
@@ -476,7 +473,7 @@ Il risultato conferma che il sistema riceve dal DC un'identità completa e coere
 
 ![risultato id](immagini/login.png)
 
-![login ui](./immagini/loginui.png)
+![login ui](./immagini/logingui.png)
 
 ![logged ui](./immagini/logged.png)
 ### Conclusioni della verifica
