@@ -371,6 +371,37 @@ tls_require_cert = demand
 In questo screenshot si vede un login riuscito effettuato tramite l'interfaccia di roundcube: `sudo docker logs mailserver` mostra che l'utente enrico si è loggato correttamente al server di posta con le sue credenziali di Active Directory
 ![ldapauth](immagini/img7_ldap_auth.png)
 
+### 3.5 Gestione dei Certificati per LDAPS: `user-patches.sh` e `dovecot-ldap-tls.conf`
+Affinché il Mail Server possa comunicare in modo sicuro tramite LDAPS con Active Directory, non è sufficiente configurare Dovecot, ma è necessario che le librerie di sistema del container si fidino della Certificate Authority (CA) interna generata da Samba.
+Per questo motivo, nel `docker-compose.yml` sono stati montati due file aggiuntivi:
+
+**`user-patches.sh`**:
+Questo script viene eseguito automaticamente grazie a un meccanismo nativo ("hook") dell'immagine `docker-mailserver`: i file mappati in `/tmp/docker-mailserver/` vengono rilevati e lanciati dall'entrypoint primario del container ancor prima che i servizi (come Dovecot) si avviino. Si occupa di copiare il certificato della CA di Samba (condiviso tramite il volume `samba-var`) nel trust store di sistema e di aggiornare i certificati per renderli validi a livello globale nel container.
+```bash
+#!/bin/bash
+# user-patches.sh - eseguito da docker-mailserver all'avvio del container
+echo "user-patches.sh: Installazione CA Samba AD nel trust store di sistema..."
+
+if [ -f /ad-data/private/tls/ca.pem ]; then
+    cp /ad-data/private/tls/ca.pem /usr/local/share/ca-certificates/samba-ad-ca.crt
+    update-ca-certificates
+    echo "user-patches.sh: CA installata con successo."
+else
+    echo "user-patches.sh: ATTENZIONE - /ad-data/private/tls/ca.pem non trovato!"
+fi
+```
+
+**`dovecot-ldap-tls.conf`**:
+Questo file disabilita esplicitamente l'uso di `STARTTLS`, in quanto si è optato per l'uso diretto e nativo di **LDAPS (porta 636)** tramite il prefisso `ldaps://`. 
+E' il metodo standard di sicurezza per Active Directory: stabilendo fin dal primo istante un tunnel TLS implicito si prevengono attacchi di "downgrade" tipici della porta 389 in chiaro. Inoltre, evitare di chiamare inutilmente `STARTTLS` in un canale che è già cifrato previene errori di protocollo in Dovecot.
+
+```ini
+# STARTTLS disabilitato - usiamo LDAPS (porta 636) con CA di sistema
+# La CA di Samba è installata nel trust store dal user-patches.sh
+ldap_starttls = no
+```
+Questo approccio risolve alla radice i problemi di validazione del certificato da parte del client LDAP interno a Dovecot per consentire comunicazioni sicure e cifrate con Samba.
+
 
 ## 4. Join di un client Linux (Xubuntu) al dominio e verifica dell'autenticazione
 
@@ -546,5 +577,8 @@ in questo caso la mail è stata bloccata da ClamAV, come si può vedere dall'imm
 
 
 
-## 15. Conclusione
+## 7. Conclusione
 
+Il progetto ha dimostrato con successo la fattibilità di un'infrastruttura di dominio Active Directory basata su Samba e completamente containerizzata. Si è riusciti a superare in modo agevole le varie sfide legate alla configurazione di rete, come il conflitto DNS sulla porta 53 e le limitazioni della modalità network host in Docker, per giungere a un'integrazione fluida e sicura dei servizi (tramite LDAPS). L'adozione di Docker e dell'approccio "Infrastructure-as-Code", realizzato tramite il file `docker-compose.yml` assieme agli script per il provisioning automatico e la gestione dei certificati (`entrypoint.sh`, `user-patches.sh`), ha reso l'ambiente automatizzato, isolato, ampiamente documentato e riproducibile su altre macchine semplicemente con un comando.
+
+Inoltre, i test effettuati aggiungendo al dominio un client Linux esterno ed integrando i servizi di posta elettronica (attraverso l'uso di Roundcube, client mail locali come Thunderbird e testando filtri di sicurezza quali ClamAV e SpamAssassin) hanno confermato l'eccellente funzionamento dell'autenticazione centralizzata e la solidità complessiva dell'architettura. Tutti gli obiettivi preposti per questa organizzazione simulata sono stati quindi pienamente raggiunti.
