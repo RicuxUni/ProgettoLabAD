@@ -1,7 +1,7 @@
 # Infrastruttura Active Directory e Mail Server LALILULELO
 **Enrico Petrillo 902855**
 
-## 1. Approccio 
+## 1. Introduzione 
 Il progetto scelto è la realizzazione di un'infrastruttura di dominio Active Directory (Samba) per una piccola organizzazione composta da 5 client (computer), 10 utenti interattivi e 10 caselle di posta elettronica da 5 GB (totale 50 GB di storage dedicato alla posta).
 
 Piuttosto che eseguire decine di comandi manuali all'interno della macchina server, **la logica di configurazione è stata codificata all'interno di script, Dockerfile, docker-compose.yml e file di configurazione**. 
@@ -402,8 +402,36 @@ ldap_starttls = no
 ```
 Questo approccio risolve alla radice i problemi di validazione del certificato da parte del client LDAP interno a Dovecot per consentire comunicazioni sicure e cifrate con Samba.
 
+## 4. Amministrazione Dominio
+Per l'amministrazione del dominio è possibile usare dei comandi al terminale come quelli qui sotto, o anche  installare strumenti visuali come PHPLDAPADMIN
 
-## 4. Join di un client Linux (Xubuntu) al dominio e verifica dell'autenticazione
+### Gestione Utenti e Gruppi in AD (`samba-tool`)
+Eseguire dal terminale Host:
+
+- **Creazione Utente**:
+  ```bash
+  docker exec -it lalilulelo_ad samba-tool user create enrico Password123!
+  ```
+- **Aggiunta utente al gruppo Amministratori**:
+  ```bash
+  docker exec -it lalilulelo_ad samba-tool group addmembers "Domain Admins" enrico
+  ```
+- **Reset Password**:
+  ```bash
+  docker exec -it lalilulelo_ad samba-tool user setpassword enrico --newpassword=1234567-A
+  ```
+- **Elenco e disattivazione utenti**:
+  ```bash
+  docker exec -it lalilulelo_ad samba-tool user list
+  docker exec lalilulelo_ad samba-tool user disable enrico
+  ```
+
+In questo progetto sono stati usati entrambe le modalità di gestione del dominio: da riga di comando e tramite PHPLDAPADMIN.
+
+![phppng](immagini/php.png)
+
+
+## 5. Join di un client Linux (Xubuntu) al dominio e verifica dell'autenticazione
 
 A completamento del progetto, è stato verificato che il Domain Controller sia in grado di autenticare correttamente un client Linux esterno, distinto dalle macchine Docker utilizzate per la creazione del dominio. A tale scopo è stata utilizzata una VM Xubuntu 26.04 LTS, unita al dominio `lalilulelo.local` (realm `LALILULELO.LOCAL`) tramite lo stack `realmd`/`sssd`, e sono stati eseguiti test di login reali con un utente di dominio (`enrico`).
 
@@ -519,33 +547,6 @@ Il risultato conferma che il sistema riceve dal DC un'identità completa e coere
 ![logged ui](./immagini/logged.png)
 
 
-## 5. Amministrazione Dominio
-Per l'amministrazione del dominio è possibile usare dei comandi al terminale come quelli qui sotto, o anche  installare strumenti visuali come PHPLDAPADMIN
-
-### Gestione Utenti e Gruppi in AD (`samba-tool`)
-Eseguire dal terminale Host:
-
-- **Creazione Utente**:
-  ```bash
-  docker exec -it lalilulelo_ad samba-tool user create enrico Password123!
-  ```
-- **Aggiunta utente al gruppo Amministratori**:
-  ```bash
-  docker exec -it lalilulelo_ad samba-tool group addmembers "Domain Admins" enrico
-  ```
-- **Reset Password**:
-  ```bash
-  docker exec -it lalilulelo_ad samba-tool user setpassword enrico --newpassword=1234567-A
-  ```
-- **Elenco e disattivazione utenti**:
-  ```bash
-  docker exec -it lalilulelo_ad samba-tool user list
-  docker exec lalilulelo_ad samba-tool user disable enrico
-  ```
-
-In questo progetto sono stati usati entrambe le modalità di gestione del dominio: da riga di comando e tramite PHPLDAPADMIN.
-
-![phppng](immagini/php.png)
 
 ## 6. Posta Elettronica
 
@@ -579,6 +580,6 @@ in questo caso la mail è stata bloccata da ClamAV, come si può vedere dall'imm
 
 ## 7. Conclusione
 
-Il progetto ha dimostrato con successo la fattibilità di un'infrastruttura di dominio Active Directory basata su Samba e completamente containerizzata. Si è riusciti a superare in modo agevole le varie sfide legate alla configurazione di rete, come il conflitto DNS sulla porta 53 e le limitazioni della modalità network host in Docker, per giungere a un'integrazione fluida e sicura dei servizi (tramite LDAPS). L'adozione di Docker e dell'approccio "Infrastructure-as-Code", realizzato tramite il file `docker-compose.yml` assieme agli script per il provisioning automatico e la gestione dei certificati (`entrypoint.sh`, `user-patches.sh`), ha reso l'ambiente automatizzato, isolato, ampiamente documentato e riproducibile su altre macchine semplicemente con un comando.
+Il progetto ha dimostrato la fattibilità di un'infrastruttura di dominio Active Directory basata su Samba e completamente containerizzata. Si è riusciti a superare le varie sfide legate alla configurazione di rete, come il conflitto DNS sulla porta 53 e le limitazioni della modalità network host in Docker, per giungere a un'integrazione fluida e sicura dei servizi (tramite LDAPS). L'adozione di Docker e dell'approccio "Infrastructure-as-Code", realizzato tramite il file `docker-compose.yml` assieme agli script per il provisioning automatico e la gestione dei certificati (`entrypoint.sh`, `user-patches.sh`), ha reso l'ambiente automatizzato, isolato, documentato e riproducibile su altre macchine in pochi semplici passaggi.
 
-Inoltre, i test effettuati aggiungendo al dominio un client Linux esterno ed integrando i servizi di posta elettronica (attraverso l'uso di Roundcube, client mail locali come Thunderbird e testando filtri di sicurezza quali ClamAV e SpamAssassin) hanno confermato l'eccellente funzionamento dell'autenticazione centralizzata e la solidità complessiva dell'architettura. Tutti gli obiettivi preposti per questa organizzazione simulata sono stati quindi pienamente raggiunti.
+Inoltre, i test effettuati aggiungendo al dominio un client Linux esterno ed integrando i servizi di posta elettronica (attraverso l'uso di Roundcube, client mail locali come Thunderbird e testando filtri di sicurezza quali ClamAV e SpamAssassin) hanno confermato il funzionamento dell'autenticazione centralizzata e la solidità complessiva dell'architettura. Tutti gli obiettivi preposti per questa organizzazione simulata sono stati quindi raggiunti.
