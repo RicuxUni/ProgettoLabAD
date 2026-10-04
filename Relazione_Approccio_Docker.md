@@ -612,4 +612,16 @@ Il progetto ha dimostrato la fattibilità di un'infrastruttura di dominio Active
 
 Inoltre, i test effettuati aggiungendo al dominio un client Linux esterno ed integrando i servizi di posta elettronica (attraverso l'uso di Roundcube, client mail locali come Thunderbird e testando filtri di sicurezza quali ClamAV e SpamAssassin) hanno confermato il funzionamento dell'autenticazione centralizzata e la solidità complessiva dell'architettura. Tutti gli obiettivi preposti per questa organizzazione simulata sono stati quindi raggiunti.
 
+---
+
+## 9. Appendice: Il Dominio LALILULELO e la Metafora dei Patriots
+
+Il nome scelto per il dominio, **`LALILULELO`**, non è casuale: è un chiaro riferimento alla saga di Metal Gear, in cui rappresenta la parola in codice utilizzata per riferirsi ai **Patriots**, l'organizzazione segreta che governa gli Stati Uniti da dietro le quinte.
+
+Esiste un'analogia architetturale e concettuale molto forte tra l'infrastruttura sviluppata in questo progetto e i Patriots:
+- **Controllo Centralizzato:** Così come la rete di Intelligenze Artificiali dei Patriots supervisiona e controlla la società manipolando le informazioni, il **Domain Controller (Active Directory)** funge da cervello centrale della rete. Determina in modo insindacabile chi esiste nel sistema, chi può accedere alle risorse e con quali permessi.
+- **Invisibilità e Trasparenza:** I cittadini nella saga vivono ignari dell'esistenza dei Patriots. Allo stesso modo, gli utenti di questa rete si autenticano ai loro computer client o accedono alla webmail in maniera fluida e trasparente, senza (quasi) sapere che dietro le quinte ogni loro azione è validata e governata da un'entità centrale invisibile (Samba via LDAP/Kerberos).
+
+In sintesi, la creazione di questo dominio Active Directory ha permesso di simulare su piccola scala un vero e proprio "Sistema" capace di orchestrare identità, regole e autorizzazioni.
+
 
