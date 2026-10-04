@@ -1,5 +1,5 @@
 # Infrastruttura Active Directory e Mail Server LALILULELO
-**Enrico Petrillo 902855**
+**Enrico Petrillo 902855 - 04/10/2026** 
 
 ## 1. Introduzione 
 Il progetto scelto è la realizzazione di un'infrastruttura di dominio Active Directory (Samba) per una piccola organizzazione composta da 5 client (computer), 10 utenti interattivi e 10 caselle di posta elettronica da 5 GB (totale 50 GB di storage dedicato alla posta).
@@ -9,6 +9,8 @@ Piuttosto che eseguire decine di comandi manuali all'interno della macchina serv
 Questo approccio permette di definire, avviare e distruggere l'intera infrastruttura (Domain Controller, Web UI, Mail Server e Webmail) con un solo comando.
 
 ![Portainer](immagini/img1_architettura.png)
+
+*nota: la relazione non segue una logica temporale, ma piuttosto logica tematica. Nella realtà  è stato necessario fare vari tentativi, errori e modifche.*
 
 ## 2. Installazione VM e Preparazione Host
 
@@ -577,9 +579,37 @@ in questo caso la mail è stata bloccata da ClamAV, come si può vedere dall'imm
 ![bird](immagini/bird.png)
 
 
+## 7. Strumenti Usati
 
-## 7. Conclusione
+Per la realizzazione e il testing del progetto è stato impiegato il seguente stack tecnologico e hardware:
+
+- **Infrastruttura Hardware e Virtualizzazione:**
+  - **2 PC fisici** (Macchine host).
+  - **2 Macchine Virtuali** (una dedicata all'engine Docker e l'altra utilizzata come client).
+
+- **Sistemi Operativi e Gestione Container:**
+  - **Xubuntu:** Sistema operativo per le macchine virtuali.
+  - **Docker & Portainer:** Per la containerizzazione dei servizi e la relativa gestione grafica.
+
+- **Autenticazione e Active Directory:**
+  - **Samba:** Per l'emulazione del Domain Controller (Active Directory).
+  - **LDAP / Kerberos:** Protocolli alla base dell'autenticazione centralizzata.
+  - **realmd & sssd:** Demoni utilizzati sul client Linux per il join al dominio.
+
+- **Servizi di Posta Elettronica:**
+  - **Roundcube:** Interfaccia Webmail.
+  - **Thunderbird:** Client di posta (MUA) utilizzato per i test.
+  - **ClamAV & SpamAssassin:** Antivirus e filtro antispam integrati nel mail server.
+
+- **Strumenti di Sviluppo e Gestione Remota:**
+  - **Visual Studio Code & GitHub:** Per lo sviluppo degli script, la scrittura della documentazione e il versioning.
+  - **SSH & WinSCP:** Per il collegamento remoto e il trasferimento dei file dalle macchine fisiche (Windows) alle macchine virtuali.
+
+
+## 8. Conclusione
 
 Il progetto ha dimostrato la fattibilità di un'infrastruttura di dominio Active Directory basata su Samba e completamente containerizzata. Si è riusciti a superare le varie sfide legate alla configurazione di rete, come il conflitto DNS sulla porta 53 e le limitazioni della modalità network host in Docker, per giungere a un'integrazione fluida e sicura dei servizi (tramite LDAPS). L'adozione di Docker e dell'approccio "Infrastructure-as-Code", realizzato tramite il file `docker-compose.yml` assieme agli script per il provisioning automatico e la gestione dei certificati (`entrypoint.sh`, `user-patches.sh`), ha reso l'ambiente automatizzato, isolato, documentato e riproducibile su altre macchine in pochi semplici passaggi.
 
 Inoltre, i test effettuati aggiungendo al dominio un client Linux esterno ed integrando i servizi di posta elettronica (attraverso l'uso di Roundcube, client mail locali come Thunderbird e testando filtri di sicurezza quali ClamAV e SpamAssassin) hanno confermato il funzionamento dell'autenticazione centralizzata e la solidità complessiva dell'architettura. Tutti gli obiettivi preposti per questa organizzazione simulata sono stati quindi raggiunti.
+
+
